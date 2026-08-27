@@ -231,7 +231,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    if: ${{ github.event.repository.owner.id }} == ${{ github.event.sender.id }}
+    if: github.event.repository.owner.id == github.event.sender.id
 
     steps:
       - name: Checkout
@@ -280,7 +280,7 @@ jobs:
       - name: Download source code
         id: down
         working-directory: /builder
-        if: ${{ steps.init.outputs.status }} == 'success' && !cancelled()
+        if: steps.init.outputs.status == 'success' && !cancelled()
         run: |
           df -hT ${PWD}
           git clone -q --single-branch --depth=1 --branch=main https://github.com/armbian/build.git build
@@ -291,7 +291,7 @@ jobs:
       - name: Compile Armbian [ ${{ inputs.set_release }} ]
         id: compile
         working-directory: /builder
-        if: ${{ steps.down.outputs.status }} == 'success' && !cancelled()
+        if: steps.down.outputs.status == 'success' && !cancelled()
         run: |
           # Compile method and parameter description: https://docs.armbian.com/Developer-Guide_Build-Options
           cd build/
@@ -302,7 +302,7 @@ jobs:
 
       - name: Organize files and clear space
         id: clean
-        if: ${{ steps.compile.outputs.status }} == 'success' && !cancelled()
+        if: steps.compile.outputs.status == 'success' && !cancelled()
         run: |
           # Organize and keep essential files, delete unnecessary files
           chmod +x ${ROOTFS_SCRIPT}
@@ -315,7 +315,7 @@ jobs:
 
       - name: Upload Armbian image to Release
         uses: ncipollo/release-action@main
-        if: ${{ steps.clean.outputs.status }} == 'success' && !cancelled()
+        if: steps.clean.outputs.status == 'success' && !cancelled()
         with:
           tag: ${{ steps.clean.outputs.build_tag }}
           artifacts: build/output/images/*
@@ -324,7 +324,7 @@ jobs:
 
       - name: Rebuild Armbian
         uses: hellotheasia/amlogic-s9xxx-armbian@main
-        if: ${{ steps.clean.outputs.status }} == 'success' && !cancelled()
+        if: steps.clean.outputs.status == 'success' && !cancelled()
         with:
           build_target: armbian
           armbian_path: build/output/images/*.img.gz
@@ -338,7 +338,7 @@ jobs:
 
       - name: Upload Rebuild image to Release
         uses: ncipollo/release-action@main
-        if: ${{ env.PACKAGED_STATUS }} == 'success' && !cancelled()
+        if: env.PACKAGED_STATUS == 'success' && !cancelled()
         with:
           tag: ${{ steps.clean.outputs.build_tag }}
           artifacts: ${{ env.PACKAGED_OUTPUTPATH }}/*
