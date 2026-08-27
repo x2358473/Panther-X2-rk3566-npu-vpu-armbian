@@ -231,6 +231,8 @@ env:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     if: github.event.repository.owner.id == github.event.sender.id
 
     steps:
@@ -252,13 +254,14 @@ jobs:
           sudo -E apt-get -y install bc binfmt-support bison build-essential ccache curl flex gawk gcc-aarch64-linux-gnu \
             git libncurses5-dev libssl-dev lvm2 make pkg-config pv qemu-user-static rsync sudo u-boot-tools uuid-dev xz-utils zlib1g-dev
           sudo -E systemctl daemon-reload
+          #sudo -E apt-get -y full-upgrade
           sudo -E apt-get -y autoremove --purge
           sudo -E apt-get clean
           sudo sed -i '/NVM_DIR/d;/skel/d' /root/.bashrc /root/.profile 2>/dev/null || true
           sudo rm -rf ~/{.cargo,.dotnet,.rustup}
           sudo timedatectl set-timezone "${TZ}"
           echo "status=success" >> ${GITHUB_OUTPUT}
-          
+
       - name: Create simulated physical disk
         run: |
           mnt_size=$(expr $(df -h /mnt | tail -1 | awk '{print $4}' | sed 's/[[:alpha:]]//g' | sed 's/\..*//') - 1)
@@ -320,7 +323,7 @@ jobs:
           tag: ${{ steps.clean.outputs.build_tag }}
           artifacts: build/output/images/*
           allowUpdates: true
-          token: ${{ secrets.GH_TOKEN }}
+          token: ${{ secrets.GH_TOKENS }}
 
       - name: Rebuild Armbian
         uses: hellotheasia/amlogic-s9xxx-armbian@main
@@ -345,7 +348,7 @@ jobs:
           allowUpdates: true
           removeArtifacts: false
           replacesArtifacts: true
-          token: ${{ secrets.GH_TOKEN }}
+          token: ${{ secrets.GH_TOKENS }}
           body: |
             ### Armbian Image information
             - Default username: root
